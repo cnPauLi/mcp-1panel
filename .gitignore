@@ -30,6 +30,8 @@ __debug*
 
 # Dependency directories
 build
+dist
 logs
+1panel-app/*/*/mcp-1panel-linux-*
 .gocache
 docs/plan/

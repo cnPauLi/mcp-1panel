@@ -1,0 +1,20 @@
+additionalProperties:
+  key: mcp-1panel
+  name: 1Panel MCP Server
+  tags:
+    - Tool
+  shortDescZh: 1Panel 的 MCP 服务器
+  shortDescEn: MCP server for 1Panel
+  description:
+    en: Model Context Protocol server for 1Panel. Exposes 1Panel operations as MCP tools over HTTPS with token authentication.
+    zh: 为 1Panel 提供 MCP 服务，通过 HTTPS 和令牌鉴权将 1Panel 操作暴露为 MCP 工具。
+    zh-Hant: 為 1Panel 提供 MCP 服務，透過 HTTPS 和權杖鑑權將 1Panel 操作暴露為 MCP 工具。
+  type: tool
+  crossVersionUpdate: true
+  limit: 0
+  website: https://github.com/1Panel-dev/mcp-1panel
+  github: https://github.com/1Panel-dev/mcp-1panel
+  document: https://github.com/1Panel-dev/mcp-1panel
+  architectures:
+    - amd64
+    - arm64

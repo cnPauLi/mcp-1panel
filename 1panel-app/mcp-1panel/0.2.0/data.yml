@@ -1,0 +1,72 @@
+additionalProperties:
+  formFields:
+    - default: http://host.docker.internal:9999
+      envKey: PANEL_HOST
+      labelEn: 1Panel address
+      labelZh: 1Panel 地址
+      label:
+        en: 1Panel address
+        zh: 1Panel 地址
+        zh-Hant: 1Panel 位址
+      required: true
+      rule: paramHttp
+      type: text
+    - default: ""
+      envKey: PANEL_ACCESS_TOKEN
+      labelEn: 1Panel API key
+      labelZh: 1Panel API 密钥
+      label:
+        en: 1Panel API key
+        zh: 1Panel API 密钥
+        zh-Hant: 1Panel API 金鑰
+      required: true
+      type: password
+    - default: mcp
+      envKey: MCP_AUTH_TOKEN
+      labelEn: MCP bearer token
+      labelZh: MCP 访问令牌
+      label:
+        en: MCP bearer token
+        zh: MCP 访问令牌
+        zh-Hant: MCP 存取權杖
+      random: true
+      required: true
+      type: password
+    - default: readonly
+      envKey: MCP_ACCESS_LEVEL
+      labelEn: Tool access level
+      labelZh: 工具权限级别
+      label:
+        en: Tool access level
+        zh: 工具权限级别
+        zh-Hant: 工具權限等級
+      required: true
+      type: select
+      values:
+        - label: readonly
+          value: readonly
+        - label: readwrite
+          value: readwrite
+        - label: full
+          value: full
+    - default: localhost,127.0.0.1
+      envKey: MCP_TLS_HOSTS
+      labelEn: TLS hostnames
+      labelZh: TLS 证书地址
+      label:
+        en: TLS hostnames
+        zh: TLS 证书地址
+        zh-Hant: TLS 憑證位址
+      required: true
+      type: text
+    - default: 8000
+      envKey: PANEL_APP_PORT_HTTP
+      labelEn: Port
+      labelZh: 端口
+      label:
+        en: Port
+        zh: 端口
+        zh-Hant: 埠
+      required: true
+      rule: paramPort
+      type: number
