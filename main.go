@@ -59,6 +59,7 @@ type httpSecurityConfig struct {
 	AllowedOrigins []string
 	AllowInsecure  bool
 	AllowRemote    bool
+	AllowPlaintext bool
 	TLSDir         string
 	TLSHosts       []string
 }
@@ -211,7 +212,13 @@ func validateHTTPListenAddr(scheme, listenAddr string, security httpSecurityConf
 		return fmt.Errorf("HTTP transport refuses non-loopback listen address %q without -allow-remote-http", listenAddr)
 	}
 	if scheme != "https" {
-		return fmt.Errorf("HTTP transport refuses non-loopback listen address %q without HTTPS", listenAddr)
+		if !security.AllowPlaintext {
+			return fmt.Errorf("HTTP transport refuses non-loopback listen address %q without HTTPS; set -allow-plaintext-http when TLS is terminated by a reverse proxy", listenAddr)
+		}
+		if security.AllowInsecure || security.Token == "" {
+			return errors.New("plaintext remote HTTP transport requires MCP authentication")
+		}
+		return nil
 	}
 	if security.AllowInsecure || security.Token == "" {
 		return errors.New("remote HTTPS transport requires MCP authentication")
@@ -335,17 +342,18 @@ func parseHTTPAddr(raw string) (scheme, listenAddr, basePath, displayAddr string
 
 func main() {
 	var (
-		transport         string
-		accessToken       string
-		host              string
-		addr              string
-		mcpToken          string
-		allowedOriginsRaw string
-		allowInsecureHTTP bool
-		allowRemoteHTTP   bool
-		accessLevelRaw    string
-		tlsDir            string
-		tlsHostsRaw       string
+		transport          string
+		accessToken        string
+		host               string
+		addr               string
+		mcpToken           string
+		allowedOriginsRaw  string
+		allowInsecureHTTP  bool
+		allowRemoteHTTP    bool
+		allowPlaintextHTTP bool
+		accessLevelRaw     string
+		tlsDir             string
+		tlsHostsRaw        string
 	)
 	flag.StringVar(&transport, "transport", "stdio", "Transport type (stdio, streamable-http)")
 	flag.StringVar(&addr, "addr", "http://127.0.0.1:8000", "Base URL (host, port, optional path) for HTTP transports")
@@ -354,7 +362,8 @@ func main() {
 	flag.StringVar(&mcpToken, "mcp-token", "", "Pre-shared Bearer token for streamable-http transport")
 	flag.StringVar(&allowedOriginsRaw, "allowed-origins", "", "Comma-separated HTTP Origin allowlist for HTTP transports")
 	flag.BoolVar(&allowInsecureHTTP, "allow-insecure-http", false, "Allow unauthenticated HTTP transports; only use for local development")
-	flag.BoolVar(&allowRemoteHTTP, "allow-remote-http", false, "Allow HTTPS transports to listen on non-loopback addresses")
+	flag.BoolVar(&allowRemoteHTTP, "allow-remote-http", false, "Allow HTTP transports to listen on non-loopback addresses")
+	flag.BoolVar(&allowPlaintextHTTP, "allow-plaintext-http", false, "Allow plaintext HTTP on non-loopback addresses when TLS is terminated by a reverse proxy")
 	flag.StringVar(&accessLevelRaw, "access-level", "", "MCP tool access level: readonly, readwrite, or full")
 	flag.StringVar(&tlsDir, "tls-dir", "", "Directory for the MCP local CA and server certificate")
 	flag.StringVar(&tlsHostsRaw, "tls-hosts", "", "Comma-separated DNS names and IP addresses for the MCP server certificate")
@@ -384,6 +393,7 @@ func main() {
 		AllowedOrigins: parseAllowedOrigins(allowedOriginsRaw),
 		AllowInsecure:  allowInsecureHTTP,
 		AllowRemote:    allowRemoteHTTP,
+		AllowPlaintext: allowPlaintextHTTP,
 		TLSDir:         tlsDir,
 		TLSHosts:       parseTLSHosts(tlsHostsRaw),
 	}

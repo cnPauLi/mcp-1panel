@@ -49,16 +49,6 @@ additionalProperties:
           value: readwrite
         - label: full
           value: full
-    - default: localhost,127.0.0.1
-      envKey: MCP_TLS_HOSTS
-      labelEn: TLS hostnames
-      labelZh: TLS 证书地址
-      label:
-        en: TLS hostnames
-        zh: TLS 证书地址
-        zh-Hant: TLS 憑證位址
-      required: true
-      type: text
     - default: 8000
       envKey: PANEL_APP_PORT_HTTP
       labelEn: Port

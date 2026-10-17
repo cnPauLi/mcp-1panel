@@ -1,6 +1,6 @@
 # 1Panel MCP Server 本地应用
 
-将 [mcp-1panel](https://github.com/1Panel-dev/mcp-1panel) 打包为 1Panel 本地应用。应用以内置的 Linux 二进制构建 Docker 镜像，启动 Streamable HTTP 传输并提供 HTTPS + Bearer Token 鉴权。
+将 [mcp-1panel](https://github.com/1Panel-dev/mcp-1panel) 打包为 1Panel 本地应用。应用以内置的 Linux 二进制构建 Docker 镜像，启动 Streamable HTTP 传输，使用明文 HTTP + Bearer Token 鉴权，由外部 Nginx 终止 TLS。
 
 ## 生成应用包
 
@@ -35,20 +35,50 @@ tar -xzf mcp-1panel-0.2.0-1panel-app.tar.gz -C /opt/1panel/resource/apps/local/
 | 1Panel API 密钥 | 在 1Panel「面板设置 → API 接口」中创建 |
 | MCP 访问令牌 | 客户端调用 MCP 时使用的 Bearer Token，默认自动追加随机串 |
 | 工具权限级别 | `readonly`（默认）、`readwrite`、`full` |
-| TLS 证书地址 | 写入 HTTPS 证书 SAN 的域名/IP，必须包含客户端实际访问使用的地址，如 `mcp.example.com,192.168.1.10` |
-| 端口 | 对外暴露的 HTTPS 端口，默认 `8000` |
+| 端口 | 容器映射到宿主机 `127.0.0.1` 的明文 HTTP 端口，默认 `8000`，供本机 Nginx 反向代理 |
 
-> TLS 证书在容器首次启动时生成。修改「TLS 证书地址」后重启应用即可自动重新签发服务端证书，CA 不变。
+## Nginx 反向代理
+
+服务在容器内监听明文 HTTP，证书由外部 Nginx 配置。示例：
+
+```nginx
+server {
+    listen 443 ssl;
+    http2 on;
+    server_name mcp.example.com;
+
+    ssl_certificate     /path/to/fullchain.pem;
+    ssl_certificate_key /path/to/privkey.pem;
+
+    location /mcp {
+        proxy_pass http://127.0.0.1:8000;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+
+        # Streamable HTTP / SSE 需要关闭缓冲并放宽超时
+        proxy_buffering off;
+        proxy_request_buffering off;
+        proxy_read_timeout 3600s;
+        proxy_send_timeout 3600s;
+        chunked_transfer_encoding on;
+    }
+}
+```
+
+> 应用默认将端口绑定到 `127.0.0.1`。如果 Nginx 运行在其他容器中，请把 compose 的 `ports` 改为 `${PANEL_APP_PORT_HTTP}:8000`，并通过防火墙或 1Panel 安全组限制来源。
 
 ## 客户端配置
 
-MCP 端点：`https://<服务器地址>:<端口>/mcp`
+MCP 端点：`https://mcp.example.com/mcp`
 
 ```json
 {
   "mcpServers": {
     "mcp-1panel": {
-      "url": "https://mcp.example.com:8000/mcp",
+      "url": "https://mcp.example.com/mcp",
       "headers": {
         "Authorization": "Bearer <MCP 访问令牌>"
       }
@@ -57,22 +87,11 @@ MCP 端点：`https://<服务器地址>:<端口>/mcp`
 }
 ```
 
-服务端使用本地自签 CA，客户端必须信任该 CA（不要关闭证书校验）。CA 文件位于实例数据目录：
-
-```text
-/opt/1panel/apps/local/mcp-1panel/<实例名>/data/tls/ca.crt
-```
-
-Node 系客户端可通过环境变量信任：
-
-```bash
-export NODE_EXTRA_CA_CERTS=/opt/1panel/apps/local/mcp-1panel/<实例名>/data/tls/ca.crt
-```
-
-也可以将 `ca.crt` 导入系统或客户端证书库。首次启动时应用日志会输出 CA 路径和 SHA-256 指纹，可用于核对。
+客户端只需信任 Nginx 使用的正式证书，不再需要信任服务端自签 CA。
 
 ## 安全说明
 
 - 默认以 `readonly` 权限运行，仅在明确需要时提升为 `readwrite` / `full`。
-- 监听非回环地址必须使用 HTTPS + `-allow-remote-http` + 令牌，应用已在 compose 中固定该组合。
+- 明文 HTTP 仅允许在显式设置 `-allow-plaintext-http` 且配置 MCP 令牌时监听非回环地址；应用已在 compose 中固定该组合。
+- 容器端口默认只绑定宿主机 `127.0.0.1`，请勿将明文端口直接暴露到公网。
 - 浏览器类客户端会携带 `Origin`，默认仅放行本机来源；如需从 Web 客户端访问，请自行在 compose 的 `command` 中追加 `-allowed-origins`。

@@ -12,20 +12,15 @@ services:
       - PANEL_ACCESS_TOKEN=${PANEL_ACCESS_TOKEN}
       - MCP_AUTH_TOKEN=${MCP_AUTH_TOKEN}
       - MCP_ACCESS_LEVEL=${MCP_ACCESS_LEVEL}
-    volumes:
-      - ./data/tls:/data/tls
     ports:
-      - ${PANEL_APP_PORT_HTTP}:8000
+      - 127.0.0.1:${PANEL_APP_PORT_HTTP}:8000
     command:
       - -transport
       - streamable-http
       - -addr
-      - https://0.0.0.0:8000/mcp
+      - http://0.0.0.0:8000/mcp
       - -allow-remote-http
-      - -tls-dir
-      - /data/tls
-      - -tls-hosts
-      - ${MCP_TLS_HOSTS}
+      - -allow-plaintext-http
     labels:
       createdBy: "Apps"
 networks:

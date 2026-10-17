@@ -216,6 +216,7 @@ func TestSecureHTTPHandlerLimitsBody(t *testing.T) {
 
 func TestHTTPListenSecurity(t *testing.T) {
 	secureRemote := httpSecurityConfig{AllowRemote: true, Token: "token"}
+	securePlaintextRemote := httpSecurityConfig{AllowRemote: true, AllowPlaintext: true, Token: "token"}
 	tests := []struct {
 		name     string
 		scheme   string
@@ -227,9 +228,14 @@ func TestHTTPListenSecurity(t *testing.T) {
 		{"loopback IPv6 HTTP", "http", "[::1]:8000", httpSecurityConfig{}, false},
 		{"remote not allowed", "https", "192.0.2.10:8000", httpSecurityConfig{Token: "token"}, true},
 		{"remote plaintext", "http", "192.0.2.10:8000", secureRemote, true},
+		{"remote plaintext allowed", "http", "192.0.2.10:8000", securePlaintextRemote, false},
+		{"remote plaintext no auth", "http", "192.0.2.10:8000", httpSecurityConfig{AllowRemote: true, AllowPlaintext: true, AllowInsecure: true}, true},
+		{"remote plaintext no token", "http", "192.0.2.10:8000", httpSecurityConfig{AllowRemote: true, AllowPlaintext: true}, true},
+		{"remote plaintext without allow-remote", "http", "192.0.2.10:8000", httpSecurityConfig{AllowPlaintext: true, Token: "token"}, true},
 		{"remote HTTPS", "https", "192.0.2.10:8000", secureRemote, false},
 		{"remote HTTPS no auth", "https", "192.0.2.10:8000", httpSecurityConfig{AllowRemote: true, AllowInsecure: true}, true},
 		{"wildcard HTTPS", "https", ":8000", secureRemote, false},
+		{"wildcard plaintext", "http", ":8000", securePlaintextRemote, false},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {

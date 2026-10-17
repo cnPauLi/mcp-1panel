@@ -65,7 +65,7 @@ mcp-1panel \
 
 HTTP 传输默认需要独立的 MCP 认证令牌。客户端必须在每个请求中通过 `Authorization: Bearer <令牌>` 发送认证信息；不再接受私有的 `X-MCP-Token` 请求头。该方式是面向单用户私有部署的预共享令牌模式，不是 MCP OAuth 授权流程。需要标准多用户授权时，应将服务部署在支持 OAuth 的网关之后。
 
-优先为本地桌面客户端使用 stdio。监听非回环地址时，必须同时使用 `https://` 地址、`-allow-remote-http`、认证令牌、明确的证书 SAN 和合适的 Origin 白名单。
+优先为本地桌面客户端使用 stdio。监听非回环地址时必须使用 `-allow-remote-http` 并配置认证令牌。优先使用 `https://` 地址；如果 TLS 由可信的反向代理终止，可以使用明文 HTTP，但必须同时设置 `-allow-plaintext-http`，并确保端口不直接暴露到公网。
 
 ### 权限级别
 
@@ -88,7 +88,8 @@ HTTP 传输默认需要独立的 MCP 认证令牌。客户端必须在每个请�
 - `-mcp-token`：HTTP 传输使用的预共享 Bearer 令牌
 - `-allowed-origins`：HTTP 传输允许的 Origin，多个值用逗号分隔
 - `-allow-insecure-http`：允许未鉴权 HTTP 传输，仅用于本地开发
-- `-allow-remote-http`：允许 HTTPS 传输监听非回环地址
+- `-allow-remote-http`：允许 HTTP 传输监听非回环地址
+- `-allow-plaintext-http`：当 TLS 由反向代理终止时，允许非回环地址使用明文 HTTP
 - `-access-level`：工具权限级别（`readonly`、`readwrite` 或 `full`，默认：`readonly`）
 - `-tls-dir`：本地 CA 和 HTTPS 服务端证书目录
 - `-tls-hosts`：HTTPS 服务端证书的 DNS 名称和 IP，多个值用逗号分隔

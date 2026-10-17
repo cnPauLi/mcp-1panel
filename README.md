@@ -65,7 +65,7 @@ On first startup, the server writes the CA path and SHA-256 fingerprint to stder
 
 HTTP transports require an MCP authentication token by default. Clients must send it on every request as `Authorization: Bearer <token>`; the private `X-MCP-Token` header is not accepted. This is a pre-shared token mode intended for a single-user/private deployment, not the MCP OAuth authorization flow. Put the server behind an OAuth-capable gateway when standards-based multi-user authorization is required.
 
-Use stdio for local desktop clients when possible. Non-loopback listeners require an `https://` address, `-allow-remote-http`, a token, explicit certificate SANs, and an appropriate Origin allowlist.
+Use stdio for local desktop clients when possible. Non-loopback listeners require `-allow-remote-http` and a token. Prefer an `https://` address; when TLS is terminated by a trusted reverse proxy, use plaintext HTTP with `-allow-plaintext-http` and bind the port so it is not publicly reachable.
 
 ### Access levels
 
@@ -88,7 +88,8 @@ Set the level with `-access-level` or `MCP_ACCESS_LEVEL`. Command-line configura
 - `-mcp-token`: Pre-shared Bearer token for HTTP transports
 - `-allowed-origins`: Comma-separated Origin allowlist for HTTP transports
 - `-allow-insecure-http`: Allow unauthenticated HTTP transports; only use for local development
-- `-allow-remote-http`: Allow HTTPS transports to listen on non-loopback addresses
+- `-allow-remote-http`: Allow HTTP transports to listen on non-loopback addresses
+- `-allow-plaintext-http`: Allow plaintext HTTP on non-loopback addresses when TLS is terminated by a reverse proxy
 - `-access-level`: Tool access level (`readonly`, `readwrite`, or `full`; default: `readonly`)
 - `-tls-dir`: Directory for the local CA and HTTPS server certificate
 - `-tls-hosts`: Comma-separated DNS names and IP addresses for the HTTPS server certificate
